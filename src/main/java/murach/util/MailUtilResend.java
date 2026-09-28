@@ -50,6 +50,37 @@ public final class MailUtilResend {
         }
     }
 
+    /**
+     * Checks that the API key is accepted, without sending an email.
+     * A "sending access" key can't list domains and gets a restricted_api_key
+     * error, which still proves the key is valid.
+     */
+    public static void testConnection() throws MessagingException {
+        String apiKey = MailConfig.resendApiKey();
+        if (apiKey.isEmpty()) {
+            throw new MessagingException("RESEND_API_KEY must be set for MAIL_MODE=resend");
+        }
+        HttpRequest request = HttpRequest.newBuilder(URI.create("https://api.resend.com/domains"))
+                .timeout(Duration.ofSeconds(15))
+                .header("Authorization", "Bearer " + apiKey)
+                .GET()
+                .build();
+        try {
+            HttpResponse<String> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+            boolean ok = response.statusCode() / 100 == 2
+                    || response.body().contains("restricted_api_key");
+            if (!ok) {
+                throw new MessagingException("Resend API returned HTTP "
+                        + response.statusCode() + ": " + response.body());
+            }
+        } catch (IOException e) {
+            throw new MessagingException("Unable to reach Resend API: " + e.getMessage(), e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new MessagingException("Interrupted while testing Resend API", e);
+        }
+    }
+
     static String toJson(Email email) {
         StringBuilder sb = new StringBuilder("{");
         sb.append("\"from\":").append(quote(email.from()));

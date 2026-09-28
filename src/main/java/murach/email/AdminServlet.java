@@ -1,11 +1,7 @@
 package murach.email;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 import javax.mail.MessagingException;
@@ -13,7 +9,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import murach.business.User;
 import murach.data.UserDB;
@@ -29,9 +24,6 @@ import murach.util.MailService;
 public class AdminServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
-    private static final SecureRandom RANDOM = new SecureRandom();
-    private static final String ADMIN_ATTR = "isAdmin";
-    private static final String CSRF_ATTR = "csrfToken";
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -42,27 +34,21 @@ public class AdminServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String password = MailConfig.adminPassword();
-        if (password.isEmpty()) {
+        if (!AdminAuth.enabled()) {
             show(request, response);
             return;
         }
         String action = String.valueOf(request.getParameter("action"));
-        HttpSession session = request.getSession();
 
         if (action.equals("login")) {
-            if (matches(request.getParameter("password"), password)) {
-                request.changeSessionId();   // prevent session fixation
-                session.setAttribute(ADMIN_ATTR, Boolean.TRUE);
-            } else {
+            if (!AdminAuth.login(request)) {
                 request.setAttribute("errors", List.of("Wrong password."));
             }
-        } else if (!isAdmin(session) || !matches(request.getParameter("csrf"),
-                (String) session.getAttribute(CSRF_ATTR))) {
+        } else if (!AdminAuth.isAuthorizedPost(request)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         } else if (action.equals("logout")) {
-            session.invalidate();
+            AdminAuth.logout(request);
             response.sendRedirect(request.getContextPath() + "/admin");
             return;
         } else if (action.equals("broadcast")) {
@@ -110,32 +96,14 @@ public class AdminServlet extends HttpServlet {
 
     private void show(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.setAttribute("adminEnabled", !MailConfig.adminPassword().isEmpty());
-        HttpSession session = request.getSession(false);
-        if (session != null && isAdmin(session)) {
-            if (session.getAttribute(CSRF_ATTR) == null) {
-                byte[] token = new byte[24];
-                RANDOM.nextBytes(token);
-                session.setAttribute(CSRF_ATTR, Base64.getUrlEncoder().encodeToString(token));
-            }
+        request.setAttribute("adminEnabled", AdminAuth.enabled());
+        if (AdminAuth.isAdmin(request)) {
+            AdminAuth.ensureCsrfToken(request);
             request.setAttribute("loggedIn", true);
             request.setAttribute("users", UserDB.selectAll());
             request.setAttribute("mailMode", MailConfig.mode().name().toLowerCase());
         }
         getServletContext().getRequestDispatcher("/WEB-INF/admin.jsp").forward(request, response);
-    }
-
-    private static boolean isAdmin(HttpSession session) {
-        return Boolean.TRUE.equals(session.getAttribute(ADMIN_ATTR));
-    }
-
-    /** Constant-time comparison. */
-    private static boolean matches(String given, String expected) {
-        if (given == null || expected == null) {
-            return false;
-        }
-        return MessageDigest.isEqual(given.getBytes(StandardCharsets.UTF_8),
-                expected.getBytes(StandardCharsets.UTF_8));
     }
 
     private static String trim(String s) {

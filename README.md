@@ -5,6 +5,7 @@ This is the **Email List** app from Chapter 14 of *Murach's Java Servlets/JSP (3
 - The user fills out the Join form. The app validates the input, saves it to `UserDB` and sends a welcome email with **JavaMail** (text/plain or text/html).
 - `MailUtilLocal` sends through an SMTP server on localhost. `MailUtilGmail` sends through a remote SMTPS server (Gmail) that requires authentication.
 - The `/admin` page sends one email to the whole list (`setRecipients` + BCC).
+- The **`/mail` (Mail Services)** page shows the status of every mail service and lets an admin test a connection, compose an email and view the send history (see below).
 - The `/questions.jsp` page contains **full answers to the chapter's questions** (also copied below).
 
 ## Improvements over the slides
@@ -19,6 +20,35 @@ This is the **Email List** app from Chapter 14 of *Murach's Java Servlets/JSP (3
 | ASCII only | UTF-8 everywhere (Vietnamese is supported) |
 | SMTP only | Extra `MAIL_MODE=resend` (HTTPS API) because Render free blocks SMTP ports |
 | – | CC/BCC, multiple recipients, admin page with login + CSRF token, `/health` |
+
+## Mail Services page (`/mail`)
+
+Open it from the **Mail Services** link in the navigation bar (or the button on the home page).
+
+| Feature | Who can use it | Description |
+|---|---|---|
+| Service status | Anyone | 4 cards: `log`, `local` (MailUtilLocal), `gmail` (MailUtilGmail), `resend` (HTTPS API). Each card shows **Default / Configured / Not configured** and its host/port. Credentials are masked (`jo***@gmail.com`). |
+| Test connection | Admin | Connects to or logs in to the SMTP server (`transport.connect()`), or checks the Resend API key, **without sending an email**. |
+| Compose email | Admin | Pick the service to send through, To/CC/BCC (several addresses separated by commas), subject, text/plain or text/html body. Max 50 recipients. |
+| Send history | Admin | The last 50 sends (welcome emails, admin broadcasts, composed emails) with status `SENT` / `LOGGED` / `FAILED` and the error message. |
+
+Sending requires logging in with `ADMIN_PASSWORD`, plus a CSRF token, so a public deployment on Render can't be abused as an open relay.
+
+Code: `MailServiceServlet` → `MailService.send(email, mode)` / `testConnection(mode)` / `services()`. History lives in `MailLog`, and the login/CSRF code shared with `/admin` lives in `AdminAuth`.
+
+Local test with Mailpit (a fake SMTP server with a web UI at http://localhost:8025):
+
+```bash
+docker network create ch14net
+```
+
+```bash
+docker run -d --name mailpit --network ch14net -p 8025:8025 axllent/mailpit
+```
+
+```bash
+docker run --rm --network ch14net -p 8080:8080 -e MAIL_MODE=local -e SMTP_HOST=mailpit -e SMTP_PORT=1025 -e ADMIN_PASSWORD=change-me ch14-email
+```
 
 ## Configuration (environment variables)
 
@@ -138,8 +168,9 @@ Mail client (sender) --SMTP--> Sending mail server --SMTP--> Receiving mail serv
 ```
 src/main/java/murach/business   User, UserValidator
 src/main/java/murach/data       UserDB (in-memory)
-src/main/java/murach/util       Email, MailConfig, MailUtil, MailUtilLocal, MailUtilGmail, MailUtilResend, MailService, HtmlUtil
-src/main/java/murach/email      EmailListServlet, WelcomeEmail, AdminServlet, HealthServlet
-src/main/webapp                 index.jsp, thanks.jsp, questions.jsp, WEB-INF/{web.xml, admin.jsp, error.jsp}
+src/main/java/murach/util       Email, MailConfig, MailUtil, MailUtilLocal, MailUtilGmail, MailUtilResend,
+                                MailService, MailServiceInfo, MailLog, HtmlUtil
+src/main/java/murach/email      EmailListServlet, WelcomeEmail, AdminServlet, AdminAuth, MailServiceServlet, HealthServlet
+src/main/webapp                 index.jsp, thanks.jsp, questions.jsp, WEB-INF/{web.xml, admin.jsp, mail.jsp, error.jsp}
 Dockerfile, docker-entrypoint.sh, render.yaml
 ```

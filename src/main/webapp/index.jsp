@@ -51,6 +51,8 @@
             or the Resend HTTP API, depending on <code>MAIL_MODE</code>.</li>
         <li>If sending fails, the <code>MessagingException</code> is logged and shown on the next page.</li>
     </ol>
+    <p><a class="button-link" href="<c:url value='/mail'/>">&#9993; Mở trang Mail Services &rarr;</a>
+       &nbsp;xem trạng thái các dịch vụ gửi mail, kiểm tra kết nối, soạn email và lịch sử gửi.</p>
 </section>
 
 <%@ include file="/WEB-INF/includes/footer.jsp" %>

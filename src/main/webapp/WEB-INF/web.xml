@@ -28,6 +28,15 @@
     </servlet-mapping>
 
     <servlet>
+        <servlet-name>MailServiceServlet</servlet-name>
+        <servlet-class>murach.email.MailServiceServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>MailServiceServlet</servlet-name>
+        <url-pattern>/mail</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
         <servlet-name>HealthServlet</servlet-name>
         <servlet-class>murach.email.HealthServlet</servlet-class>
     </servlet>

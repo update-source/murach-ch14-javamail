@@ -23,14 +23,57 @@ public final class MailUtilGmail {
     }
 
     public static void sendMail(Email email) throws MessagingException {
-        String username = MailConfig.smtpUsername();
-        String password = MailConfig.smtpPassword();
-        if (username.isEmpty() || password.isEmpty()) {
+        // 1 - get a mail session
+        Session session = createSession();
+
+        // 2 & 3 - create and address the message
+        Message message = MailUtil.buildMessage(session, email);
+
+        // 4 - send the message (authentication required)
+        Transport transport = session.getTransport();
+        try {
+            transport.connect(MailConfig.smtpUsername(), MailConfig.smtpPassword());
+            transport.sendMessage(message, message.getAllRecipients());
+        } finally {
+            transport.close();
+        }
+    }
+
+    /** Logs in to the SMTP server without sending anything. */
+    public static void testConnection() throws MessagingException {
+        Transport transport = createSession().getTransport();
+        try {
+            transport.connect(MailConfig.smtpUsername(), MailConfig.smtpPassword());
+        } finally {
+            transport.close();
+        }
+    }
+
+    public static boolean isConfigured() {
+        return !MailConfig.smtpUsername().isEmpty() && !MailConfig.smtpPassword().isEmpty();
+    }
+
+    public static String settings() {
+        return "smtps://" + MailConfig.smtpHost("smtp.gmail.com") + ":" + MailConfig.smtpPort(465)
+                + " · user " + mask(MailConfig.smtpUsername());
+    }
+
+    /** "johnsmith@gmail.com" -> "jo***@gmail.com" so the page never shows full credentials. */
+    static String mask(String username) {
+        if (username.isEmpty()) {
+            return "(chưa đặt)";
+        }
+        int at = username.indexOf('@');
+        String local = at < 0 ? username : username.substring(0, at);
+        String domain = at < 0 ? "" : username.substring(at);
+        return local.substring(0, Math.min(2, local.length())) + "***" + domain;
+    }
+
+    static Session createSession() throws MessagingException {
+        if (!isConfigured()) {
             throw new MessagingException(
                     "SMTP_USERNAME and SMTP_PASSWORD must be set for MAIL_MODE=gmail");
         }
-
-        // 1 - get a mail session
         Properties props = new Properties();
         props.put("mail.transport.protocol", "smtps");
         props.put("mail.smtps.host", MailConfig.smtpHost("smtp.gmail.com"));
@@ -41,17 +84,6 @@ public final class MailUtilGmail {
         props.put("mail.smtps.timeout", 10000);
         Session session = Session.getInstance(props);
         session.setDebug(MailConfig.debug());
-
-        // 2 & 3 - create and address the message
-        Message message = MailUtil.buildMessage(session, email);
-
-        // 4 - send the message (authentication required)
-        Transport transport = session.getTransport();
-        try {
-            transport.connect(username, password);
-            transport.sendMessage(message, message.getAllRecipients());
-        } finally {
-            transport.close();
-        }
+        return session;
     }
 }

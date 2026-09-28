@@ -13,6 +13,7 @@
         <a class="brand" href="<c:url value='/'/>">&#9993; Email List &middot; Ch14 JavaMail</a>
         <nav>
             <a href="<c:url value='/'/>">Join</a>
+            <a href="<c:url value='/mail'/>">Mail Services</a>
             <a href="<c:url value='/questions.jsp'/>">Câu hỏi &amp; trả lời</a>
             <a href="<c:url value='/admin'/>">Admin</a>
         </nav>

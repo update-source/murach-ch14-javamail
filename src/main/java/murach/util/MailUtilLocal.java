@@ -20,6 +20,30 @@ public final class MailUtilLocal {
 
     public static void sendMail(Email email) throws MessagingException {
         // 1 - get a mail session
+        Session session = createSession();
+
+        // 2 & 3 - create and address the message
+        Message message = MailUtil.buildMessage(session, email);
+
+        // 4 - send the message (no authentication required)
+        Transport.send(message);
+    }
+
+    /** Opens and closes a connection to the SMTP server without sending anything. */
+    public static void testConnection() throws MessagingException {
+        Transport transport = createSession().getTransport();
+        try {
+            transport.connect();
+        } finally {
+            transport.close();
+        }
+    }
+
+    public static String settings() {
+        return "smtp://" + MailConfig.smtpHost("localhost") + ":" + MailConfig.smtpPort(25);
+    }
+
+    static Session createSession() {
         Properties props = new Properties();
         props.put("mail.transport.protocol", "smtp");
         props.put("mail.smtp.host", MailConfig.smtpHost("localhost"));
@@ -30,11 +54,6 @@ public final class MailUtilLocal {
         // without restarting Tomcat.
         Session session = Session.getInstance(props);
         session.setDebug(MailConfig.debug());
-
-        // 2 & 3 - create and address the message
-        Message message = MailUtil.buildMessage(session, email);
-
-        // 4 - send the message (no authentication required)
-        Transport.send(message);
+        return session;
     }
 }
