@@ -2,13 +2,12 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/WEB-INF/includes/header.jsp" %>
 
-<section class="card qa">
 <h1>Chapter 14 &ndash; Câu hỏi &amp; trả lời</h1>
 <p>Trả lời đầy đủ các mục tiêu (Objectives) của chương và các câu hỏi ôn tập về JavaMail.</p>
 
 <h2>Objectives</h2>
 
-<div class="q">
+<div>
 <h3>Applied 1. Develop servlets that send email messages to the users of the application.</h3>
 <p>Đã hiện thực trong project này:</p>
 <ul>
@@ -23,12 +22,9 @@
 </ul>
 </div>
 
-<div class="q">
+<div>
 <h3>Knowledge 1. In terms of the SMTP, POP, and MIME protocols, describe how an email message is sent from one client to another.</h3>
-<div class="flow">
-    <span>Mail client (gửi)</span><i>&rarr; SMTP &rarr;</i><span>Mail server gửi</span><i>&rarr; SMTP &rarr;</i>
-    <span>Mail server nhận</span><i>&rarr; POP / IMAP &rarr;</i><span>Mail client (nhận)</span>
-</div>
+<pre>Mail client (gửi) --SMTP--&gt; Mail server gửi --SMTP--&gt; Mail server nhận --POP/IMAP--&gt; Mail client (nhận)</pre>
 <ol>
     <li>Phần mềm mail client của người gửi soạn thư. Nội dung thư được đóng gói theo chuẩn <b>MIME</b>:
         MIME cho biết kiểu nội dung (<code>text/plain</code>, <code>text/html</code>, ảnh, file đính kèm...) và bảng mã (UTF-8).</li>
@@ -44,9 +40,9 @@
 
 <h2>Câu hỏi ôn tập</h2>
 
-<div class="q">
+<div>
 <h3>1. SMTP, POP, IMAP và MIME là gì?</h3>
-<table class="info proto">
+<table>
     <tr><th>Giao thức</th><th>Mô tả</th></tr>
     <tr><td>SMTP</td><td>Simple Mail Transfer Protocol &ndash; gửi thư từ client lên server và từ mail server này sang mail server khác. Cổng 25 (không mã hoá), 465 (SMTPS/SSL), 587 (STARTTLS).</td></tr>
     <tr><td>POP (POP3)</td><td>Post Office Protocol &ndash; chuyển thư từ mail server về mail client (thường tải về rồi xoá trên server).</td></tr>
@@ -55,7 +51,7 @@
 </table>
 </div>
 
-<div class="q">
+<div>
 <h3>2. Cần những file JAR nào để dùng JavaMail API? Cài đặt thế nào?</h3>
 <ul>
     <li><code>javax.mail.jar</code>: chứa các lớp của JavaMail API.</li>
@@ -67,7 +63,7 @@
    <code>javax.activation</code> (project này đã thêm trong <code>pom.xml</code>).</p>
 </div>
 
-<div class="q">
+<div>
 <h3>3. Ba package dùng để gửi email là gì?</h3>
 <ul>
     <li><code>java.util</code>: lớp <code>Properties</code> để đặt thuộc tính cho mail session.</li>
@@ -76,7 +72,7 @@
 </ul>
 </div>
 
-<div class="q">
+<div>
 <h3>4. Bốn bước gửi một email bằng JavaMail?</h3>
 <ol>
     <li><b>Lấy mail session</b>: tạo <code>Properties</code> (<code>mail.smtp.host</code>...) rồi gọi <code>Session.getDefaultInstance(props)</code> / <code>Session.getInstance(props)</code>.</li>
@@ -86,9 +82,9 @@
 </ol>
 </div>
 
-<div class="q">
+<div>
 <h3>5. Các thuộc tính của Session và cách lấy session cho SMTP server cục bộ / từ xa?</h3>
-<table class="info proto">
+<table>
     <tr><th>Property</th><th>Ý nghĩa</th></tr>
     <tr><td><code>mail.transport.protocol</code></td><td>Giao thức gửi: thường là <code>smtp</code> hoặc <code>smtps</code>.</td></tr>
     <tr><td><code>mail.smtp.host</code></td><td>Máy chủ SMTP.</td></tr>
@@ -102,21 +98,21 @@
 <p><code>session.setDebug(true)</code> in thông tin hội thoại SMTP ra log để gỡ lỗi. Nếu ứng dụng chạy cùng máy với SMTP server thì dùng <code>localhost</code>.</p>
 </div>
 
-<div class="q">
+<div>
 <h3>6. Tại sao đổi thuộc tính Session phải khởi động lại Tomcat?</h3>
 <p><code>Session.getDefaultInstance</code> tạo session mặc định <b>một lần</b> rồi dùng chung cho cả JVM; các lần gọi sau trả về session cũ và bỏ qua
    <code>Properties</code> mới. Vì vậy phải restart Tomcat thì thay đổi mới có hiệu lực. Project này dùng <code>Session.getInstance(props)</code>
    để mỗi lần gửi tạo session mới theo cấu hình hiện tại, nên không cần restart.</p>
 </div>
 
-<div class="q">
+<div>
 <h3>7. Khác nhau giữa <code>setText</code> và <code>setContent</code>?</h3>
 <p><code>setText(body)</code> đặt nội dung văn bản thuần và tự đặt MIME type là <code>text/plain</code>.
    <code>setContent(body, "text/html")</code> nhận chuỗi HTML và MIME type <code>text/html</code>, dùng khi gửi email HTML.
    Trang Join cho phép chọn một trong hai định dạng; ta dùng thêm <code>charset=UTF-8</code> để hiển thị đúng tiếng Việt.</p>
 </div>
 
-<div class="q">
+<div>
 <h3>8. Cách đặt địa chỉ From, To, CC, BCC, kèm tên, nhiều người nhận?</h3>
 <ul>
     <li>From: <code>message.setFrom(new InternetAddress("cds@murach.com"))</code>.</li>
@@ -129,7 +125,7 @@
 <p>Trong app: email chào mừng gửi BCC cho <code>ADMIN_EMAIL</code> (nếu cấu hình); trang Admin gửi 1 thư tới toàn bộ danh sách qua BCC.</p>
 </div>
 
-<div class="q">
+<div>
 <h3>9. Gửi thư khi có và không có xác thực?</h3>
 <ul>
     <li>Không cần xác thực: phương thức static <code>Transport.send(message)</code>.</li>
@@ -139,14 +135,14 @@
 </ul>
 </div>
 
-<div class="q">
+<div>
 <h3>10. Xử lý lỗi khi gửi mail trong servlet thế nào?</h3>
 <p>Bọc lời gọi <code>sendMail</code> trong <code>try/catch (MessagingException e)</code>. Khi lỗi: đặt thuộc tính
    <code>errorMessage</code> để JSP hiển thị cho người dùng và ghi đầy đủ email (TO, FROM, SUBJECT, body) vào log bằng
    <code>this.log(...)</code> để quản trị viên có thể gửi lại. Người dùng vẫn được thêm vào danh sách và được chuyển tới <code>thanks.jsp</code>.</p>
 </div>
 
-<div class="q">
+<div>
 <h3>11. Cần lưu ý gì về bảo mật khi gửi mail qua Gmail?</h3>
 <ul>
     <li>Không hard-code mật khẩu trong mã nguồn như ví dụ <code>connect("johnsmith@gmail.com", "sesame")</code>; project đọc từ biến môi trường
@@ -158,7 +154,7 @@
 </div>
 
 <h2>Exercise 14-1 &ndash; đối chiếu</h2>
-<table class="info">
+<table>
     <tr><th>Yêu cầu</th><th>Đã làm</th></tr>
     <tr><td>Servlet gửi email khi user tham gia danh sách</td><td><code>EmailListServlet</code> + <code>WelcomeEmail</code></td></tr>
     <tr><td>Dùng SMTP server cục bộ</td><td><code>MAIL_MODE=local</code> &rarr; <code>MailUtilLocal</code></td></tr>
@@ -167,6 +163,5 @@
     <tr><td>Gửi bản sao (CC/BCC), nhiều người nhận</td><td><code>ADMIN_EMAIL</code> (BCC) và trang <code>/admin</code> (<code>setRecipients</code>)</td></tr>
     <tr><td>Hiển thị lỗi và ghi log khi gửi thất bại</td><td><code>errorMessage</code> trên <code>thanks.jsp</code> + <code>log(...)</code></td></tr>
 </table>
-</section>
 
 <%@ include file="/WEB-INF/includes/footer.jsp" %>

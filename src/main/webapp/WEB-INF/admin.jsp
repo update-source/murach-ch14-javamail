@@ -2,67 +2,64 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/WEB-INF/includes/header.jsp" %>
 
-<section class="card">
-    <h1>Admin &middot; Send to the whole list</h1>
+<h1>Admin - Send to the whole list</h1>
 
-    <c:if test="${not empty errors}">
-        <ul class="alert error">
-            <c:forEach var="e" items="${errors}"><li><c:out value="${e}"/></li></c:forEach>
-        </ul>
-    </c:if>
-    <c:if test="${not empty message}">
-        <p class="alert ok"><c:out value="${message}"/></p>
-    </c:if>
+<c:forEach var="e" items="${errors}">
+    <p class="error"><i><c:out value="${e}"/></i></p>
+</c:forEach>
+<c:if test="${not empty message}">
+    <p class="success"><c:out value="${message}"/></p>
+</c:if>
 
-    <c:choose>
-        <c:when test="${not adminEnabled}">
-            <p class="alert info">The admin page is disabled. Set the <code>ADMIN_PASSWORD</code>
-                environment variable to enable it.</p>
-        </c:when>
-        <c:when test="${not loggedIn}">
-            <form action="<c:url value='/admin'/>" method="post" class="form">
-                <input type="hidden" name="action" value="login">
-                <label for="password">Admin password</label>
-                <input id="password" type="password" name="password" required autocomplete="current-password">
-                <button type="submit">Log in</button>
-            </form>
-        </c:when>
-        <c:otherwise>
-            <p>MAIL_MODE: <code><c:out value="${mailMode}"/></code> &middot;
-               Subscribers: <b>${users.size()}</b></p>
+<c:choose>
+    <c:when test="${not adminEnabled}">
+        <p><i>The admin page is disabled. Set the ADMIN_PASSWORD
+           environment variable to enable it.</i></p>
+    </c:when>
+    <c:when test="${not loggedIn}">
+        <form action="<c:url value='/admin'/>" method="post">
+            <input type="hidden" name="action" value="login">
+            <label class="pad_top">Password:</label>
+            <input type="password" name="password" required><br>
+            <label>&nbsp;</label>
+            <input type="submit" value="Log in" class="margin_left">
+        </form>
+    </c:when>
+    <c:otherwise>
+        <p>MAIL_MODE: <c:out value="${mailMode}"/> - Subscribers: ${users.size()}</p>
 
-            <form action="<c:url value='/admin'/>" method="post" class="form">
-                <input type="hidden" name="action" value="broadcast">
-                <input type="hidden" name="csrf" value="<c:out value='${sessionScope.csrfToken}'/>">
-                <label for="subject">Subject</label>
-                <input id="subject" type="text" name="subject" maxlength="200" required
-                       value="<c:out value='${param.subject}'/>">
-                <label for="body">Body</label>
-                <textarea id="body" name="body" rows="8" required><c:out value="${param.body}"/></textarea>
-                <span class="label">Format</span>
-                <div class="radios">
-                    <label><input type="radio" name="format" value="text" checked> text/plain</label>
-                    <label><input type="radio" name="format" value="html"> text/html</label>
-                </div>
-                <button type="submit">Send to all subscribers (BCC)</button>
-            </form>
+        <form action="<c:url value='/admin'/>" method="post">
+            <input type="hidden" name="action" value="broadcast">
+            <input type="hidden" name="csrf" value="<c:out value='${sessionScope.csrfToken}'/>">
+            <label class="pad_top">Subject:</label>
+            <input type="text" name="subject" maxlength="200" required
+                   value="<c:out value='${param.subject}'/>"><br>
+            <label class="pad_top">Body:</label>
+            <textarea name="body" rows="8" required><c:out value="${param.body}"/></textarea><br>
+            <label class="pad_top">Format:</label>
+            <span>
+                <input type="radio" name="format" value="text" checked> text/plain
+                <input type="radio" name="format" value="html"> text/html
+            </span><br>
+            <label>&nbsp;</label>
+            <input type="submit" value="Send to all subscribers (BCC)" class="margin_left">
+        </form>
 
-            <h2>Subscribers</h2>
-            <table class="info">
-                <tr><th>#</th><th>First Name</th><th>Last Name</th><th>Email</th></tr>
-                <c:forEach var="u" items="${users}" varStatus="s">
-                    <tr><td>${s.count}</td><td><c:out value="${u.firstName}"/></td>
-                        <td><c:out value="${u.lastName}"/></td><td><c:out value="${u.email}"/></td></tr>
-                </c:forEach>
-            </table>
+        <h2>Subscribers</h2>
+        <table>
+            <tr><th>#</th><th>First Name</th><th>Last Name</th><th>Email</th></tr>
+            <c:forEach var="u" items="${users}" varStatus="s">
+                <tr><td>${s.count}</td><td><c:out value="${u.firstName}"/></td>
+                    <td><c:out value="${u.lastName}"/></td><td><c:out value="${u.email}"/></td></tr>
+            </c:forEach>
+        </table>
 
-            <form action="<c:url value='/admin'/>" method="post">
-                <input type="hidden" name="action" value="logout">
-                <input type="hidden" name="csrf" value="<c:out value='${sessionScope.csrfToken}'/>">
-                <button type="submit" class="secondary">Log out</button>
-            </form>
-        </c:otherwise>
-    </c:choose>
-</section>
+        <form action="<c:url value='/admin'/>" method="post">
+            <input type="hidden" name="action" value="logout">
+            <input type="hidden" name="csrf" value="<c:out value='${sessionScope.csrfToken}'/>">
+            <input type="submit" value="Log out">
+        </form>
+    </c:otherwise>
+</c:choose>
 
 <%@ include file="/WEB-INF/includes/footer.jsp" %>
