@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: murach-ch14-javamail
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: MAIL_MODE          # log | local | gmail | resend
+        value: log
+      - key: MAIL_FROM
+        sync: false
+      - key: SMTP_USERNAME      # for MAIL_MODE=gmail (paid instances only; free blocks SMTP ports)
+        sync: false
+      - key: SMTP_PASSWORD      # Gmail App Password
+        sync: false
+      - key: RESEND_API_KEY     # for MAIL_MODE=resend (works on the free plan)
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
