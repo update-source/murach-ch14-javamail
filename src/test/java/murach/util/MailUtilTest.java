@@ -79,6 +79,24 @@ class MailUtilTest {
     }
 
     @Test
+    void brevoJsonUsesRecipientObjects() {
+        Email email = new Email(List.of("a@x.com", "b@x.com"), List.of("c@x.com"), null,
+                "me@gmail.com", "Chào", "<p>Hi</p>", true);
+        assertEquals("{\"sender\":{\"email\":\"me@gmail.com\"},"
+                + "\"to\":[{\"email\":\"a@x.com\"},{\"email\":\"b@x.com\"}],"
+                + "\"cc\":[{\"email\":\"c@x.com\"}],"
+                + "\"subject\":\"Chào\",\"htmlContent\":\"<p>Hi</p>\"}", MailUtilBrevo.toJson(email));
+    }
+
+    @Test
+    void resendTestingModeErrorGetsHint() {
+        String body = "{\"statusCode\":403,\"name\":\"validation_error\",\"message\":"
+                + "\"You can only send testing emails to your own email address (me@x.com).\"}";
+        assertTrue(MailUtilResend.explain(403, body).contains("MAIL_MODE=brevo"));
+        assertTrue(!MailUtilResend.explain(500, "oops").contains("brevo"));
+    }
+
+    @Test
     void htmlWelcomeEmailEscapesName() {
         User user = new User("<script>", "X", "a@x.com");
         String body = WelcomeEmailAccess.htmlBody(user);

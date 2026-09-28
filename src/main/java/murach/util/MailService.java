@@ -31,6 +31,7 @@ public final class MailService {
                 case LOCAL -> MailUtilLocal.sendMail(email);
                 case GMAIL -> MailUtilGmail.sendMail(email);
                 case RESEND -> MailUtilResend.sendMail(email);
+                case BREVO -> MailUtilBrevo.sendMail(email);
                 default -> {
                     LOG.info(() -> "MAIL_MODE=log, email not sent:\n" + describe(email));
                     MailLog.add(mode, email, "LOGGED", "Chỉ ghi log, không gửi");
@@ -53,6 +54,7 @@ public final class MailService {
             case LOCAL -> MailUtilLocal.testConnection();
             case GMAIL -> MailUtilGmail.testConnection();
             case RESEND -> MailUtilResend.testConnection();
+            case BREVO -> MailUtilBrevo.testConnection();
             default -> { /* LOG mode needs no connection */ }
         }
     }
@@ -62,6 +64,7 @@ public final class MailService {
             case LOG, LOCAL -> true;
             case GMAIL -> MailUtilGmail.isConfigured();
             case RESEND -> !MailConfig.resendApiKey().isEmpty();
+            case BREVO -> !MailConfig.brevoApiKey().isEmpty();
         };
     }
 
@@ -81,6 +84,11 @@ public final class MailService {
         list.add(info(Mode.RESEND, "Resend HTTPS API",
                 "Gửi qua HTTPS (cổng 443) – dùng được trên Render free (chặn cổng SMTP).",
                 "https://api.resend.com · key " + (MailConfig.resendApiKey().isEmpty() ? "(chưa đặt)" : "re_***"),
+                active));
+        list.add(info(Mode.BREVO, "Brevo HTTPS API",
+                "Gửi qua HTTPS tới mọi người nhận (300 email/ngày miễn phí); "
+                        + "chỉ cần xác minh email người gửi, không cần domain.",
+                "https://api.brevo.com · key " + (MailConfig.brevoApiKey().isEmpty() ? "(chưa đặt)" : "xkeysib-***"),
                 active));
         return list;
     }

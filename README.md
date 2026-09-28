@@ -18,7 +18,7 @@ This is the **Email List** app from Chapter 14 of *Murach's Java Servlets/JSP (3
 | JAF assumed to ship with the JDK | Java 11+ removed JAF → `javax.activation` added to the pom |
 | No input validation | `UserValidator` + duplicate-email check, XSS escaping (`c:out`, `HtmlUtil`) |
 | ASCII only | UTF-8 everywhere (Vietnamese is supported) |
-| SMTP only | Extra `MAIL_MODE=resend` (HTTPS API) because Render free blocks SMTP ports |
+| SMTP only | Extra `MAIL_MODE=brevo` / `resend` (HTTPS APIs) because Render free blocks SMTP ports |
 | – | CC/BCC, multiple recipients, admin page with login + CSRF token, `/health` |
 
 ## Mail Services page (`/mail`)
@@ -27,8 +27,8 @@ Open it from the **Mail Services** link in the navigation bar (or the button on 
 
 | Feature | Who can use it | Description |
 |---|---|---|
-| Service status | Anyone | 4 cards: `log`, `local` (MailUtilLocal), `gmail` (MailUtilGmail), `resend` (HTTPS API). Each card shows **Default / Configured / Not configured** and its host/port. Credentials are masked (`jo***@gmail.com`). |
-| Test connection | Admin | Connects to or logs in to the SMTP server (`transport.connect()`), or checks the Resend API key, **without sending an email**. |
+| Service status | Anyone | 5 services: `log`, `local` (MailUtilLocal), `gmail` (MailUtilGmail), `resend`, `brevo` (HTTPS APIs). Each card shows **Default / Configured / Not configured** and its host/port. Credentials are masked (`jo***@gmail.com`). |
+| Test connection | Admin | Connects to or logs in to the SMTP server (`transport.connect()`), or checks the Resend/Brevo API key, **without sending an email**. |
 | Compose email | Admin | Pick the service to send through, To/CC/BCC (several addresses separated by commas), subject, text/plain or text/html body. Max 50 recipients. |
 | Send history | Admin | The last 50 sends (welcome emails, admin broadcasts, composed emails) with status `SENT` / `LOGGED` / `FAILED` and the error message. |
 
@@ -54,11 +54,13 @@ docker run --rm --network ch14net -p 8080:8080 -e MAIL_MODE=local -e SMTP_HOST=m
 
 | Variable | Meaning |
 |---|---|
-| `MAIL_MODE` | `log` (default – no sending, only logs and a preview), `local`, `gmail`, `resend` |
+| `MAIL_MODE` | `log` (default – no sending, only logs and a preview), `local`, `gmail`, `resend`, `brevo` |
 | `MAIL_FROM` | Sender address (default `email_list@murach.com`) |
 | `SMTP_HOST`, `SMTP_PORT` | Override the host/port (local: `localhost:25`, gmail: `smtp.gmail.com:465`) |
 | `SMTP_USERNAME`, `SMTP_PASSWORD` | Gmail account + **App Password** (requires 2-Step Verification) |
 | `RESEND_API_KEY` | API key from resend.com (for `MAIL_MODE=resend`) |
+| `BREVO_API_KEY` | API key from brevo.com (for `MAIL_MODE=brevo`) |
+| `MAIL_FROM_NAME` | Sender display name (optional, used by Brevo) |
 | `ADMIN_EMAIL` | Gets a BCC copy of every welcome email (optional) |
 | `ADMIN_PASSWORD` | Enables the `/admin` page (disabled when empty) |
 | `MAIL_DEBUG` | `true` to call `session.setDebug(true)` |
@@ -84,7 +86,15 @@ Open http://localhost:8080. To actually send mail through Gmail, add `-e MAIL_MO
 1. On Render: **New → Blueprint**, pick this repo (Render reads `render.yaml`). Or use **New → Web Service → Docker**.
 2. Render builds the `Dockerfile`, injects `PORT`, and the container listens on that port. The health check is `/health`.
 3. Set the environment variables in **Environment**:
-   - The **Free** plan blocks outbound SMTP ports 25/465/587. Use `MAIL_MODE=resend` + `RESEND_API_KEY` (without a verified domain, set `MAIL_FROM=onboarding@resend.dev`; you can only send to the email address you signed up to Resend with).
+   - The **Free** plan blocks outbound SMTP ports 25/465/587, so use an HTTPS API:
+   - **Brevo (recommended, no domain needed)** – sends to **any** recipient, 300 emails/day free:
+     1. Sign up at brevo.com and confirm your account.
+     2. **Senders, Domains & Dedicated IPs → Senders → Add a sender** with your email (e.g. Gmail), then click the confirmation link Brevo emails you.
+     3. **SMTP & API → API Keys → Generate a new API key** (`xkeysib-...`).
+     4. On Render set `MAIL_MODE=brevo`, `BREVO_API_KEY=<key>`, `MAIL_FROM=<the verified sender>`, and optionally `MAIL_FROM_NAME`.
+     5. If you get a 401 "unauthorized IP address" error: in Brevo go to **Security → Authorised IPs** and turn off IP blocking (Render has no fixed IP on the free plan).
+     6. Mail sent from an @gmail.com address may land in spam, so tell recipients to check their Spam folder.
+   - **Resend**: `MAIL_MODE=resend` + `RESEND_API_KEY`. **Without a verified domain Resend is in testing mode**: you must set `MAIL_FROM=onboarding@resend.dev`, and you can **only send to the email address you signed up to Resend with**. Any other recipient returns HTTP 403 `You can only send testing emails to your own email address`. Sending to others requires verifying a domain at resend.com/domains.
    - On a paid plan, you can use `MAIL_MODE=gmail`.
 4. Note: `UserDB` lives in memory, so the list resets when the free service sleeps or redeploys.
 
@@ -95,7 +105,7 @@ Open http://localhost:8080. To actually send mail through Gmail, add `-e MAIL_MO
 ### Objectives
 
 **Applied 1 – Develop servlets that send email messages to the users of the application.**
-`EmailListServlet` receives the form → validates it → saves the `User` → builds the welcome email (`WelcomeEmail`) → sends it through `MailService` (`MailUtilLocal` / `MailUtilGmail` / Resend). On a `MessagingException` it logs the full email and shows `errorMessage` on `thanks.jsp`.
+`EmailListServlet` receives the form → validates it → saves the `User` → builds the welcome email (`WelcomeEmail`) → sends it through `MailService` (`MailUtilLocal` / `MailUtilGmail` / Resend / Brevo). On a `MessagingException` it logs the full email and shows `errorMessage` on `thanks.jsp`.
 
 **Knowledge 1 – In terms of SMTP, POP and MIME, describe how an email message is sent from one client to another.**
 
@@ -168,7 +178,7 @@ Mail client (sender) --SMTP--> Sending mail server --SMTP--> Receiving mail serv
 ```
 src/main/java/murach/business   User, UserValidator
 src/main/java/murach/data       UserDB (in-memory)
-src/main/java/murach/util       Email, MailConfig, MailUtil, MailUtilLocal, MailUtilGmail, MailUtilResend,
+src/main/java/murach/util       Email, MailConfig, MailUtil, MailUtilLocal, MailUtilGmail, MailUtilResend, MailUtilBrevo,
                                 MailService, MailServiceInfo, MailLog, HtmlUtil
 src/main/java/murach/email      EmailListServlet, WelcomeEmail, AdminServlet, AdminAuth, MailServiceServlet, HealthServlet
 src/main/webapp                 index.jsp, thanks.jsp, questions.jsp, WEB-INF/{web.xml, admin.jsp, mail.jsp, error.jsp}

@@ -18,7 +18,9 @@ public final class MailConfig {
         /** MailUtilGmail: remote SMTPS server (Gmail by default) with authentication. */
         GMAIL,
         /** HTTPS API of resend.com - works on hosts that block SMTP ports (e.g. Render free). */
-        RESEND
+        RESEND,
+        /** HTTPS API of brevo.com - any recipient, only needs a verified sender (no domain). */
+        BREVO
     }
 
     private MailConfig() {
@@ -59,6 +61,15 @@ public final class MailConfig {
 
     public static String resendApiKey() {
         return get("RESEND_API_KEY", "");
+    }
+
+    public static String brevoApiKey() {
+        return get("BREVO_API_KEY", "");
+    }
+
+    /** Optional display name for the sender, e.g. "Murach Email List". */
+    public static String senderName() {
+        return get("MAIL_FROM_NAME", "");
     }
 
     /** Optional address that receives a BCC copy of every welcome email. */

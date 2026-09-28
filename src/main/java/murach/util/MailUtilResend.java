@@ -39,8 +39,7 @@ public final class MailUtilResend {
         try {
             HttpResponse<String> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) {
-                throw new MessagingException("Resend API returned HTTP "
-                        + response.statusCode() + ": " + response.body());
+                throw new MessagingException(explain(response.statusCode(), response.body()));
             }
         } catch (IOException e) {
             throw new MessagingException("Unable to reach Resend API: " + e.getMessage(), e);
@@ -79,6 +78,17 @@ public final class MailUtilResend {
             Thread.currentThread().interrupt();
             throw new MessagingException("Interrupted while testing Resend API", e);
         }
+    }
+
+    /** Adds a hint for Resend's most common error: testing mode without a verified domain. */
+    static String explain(int status, String body) {
+        String message = "Resend API returned HTTP " + status + ": " + body;
+        if (status == 403 && body.contains("only send testing emails")) {
+            message += " → Resend đang ở chế độ thử: chỉ gửi được tới email đã đăng ký tài khoản Resend."
+                    + " Hãy xác minh domain tại resend.com/domains, hoặc dùng MAIL_MODE=brevo"
+                    + " (gửi được tới mọi người, chỉ cần xác minh email người gửi).";
+        }
+        return message;
     }
 
     static String toJson(Email email) {

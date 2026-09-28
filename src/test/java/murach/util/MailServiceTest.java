@@ -72,7 +72,7 @@ class MailServiceTest {
         System.setProperty("SMTP_USERNAME", "johnsmith@gmail.com");
         System.setProperty("SMTP_PASSWORD", "super-secret");
         List<MailServiceInfo> services = MailService.services();
-        assertEquals(4, services.size());
+        assertEquals(5, services.size());
         for (MailServiceInfo s : services) {
             assertFalse(s.getSettings().contains("super-secret"));
             assertFalse(s.getSettings().contains("johnsmith@"));
