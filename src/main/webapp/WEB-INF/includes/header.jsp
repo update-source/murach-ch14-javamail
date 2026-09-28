@@ -10,7 +10,6 @@
 <p>
     <a href="<c:url value='/'/>">Join</a> |
     <a href="<c:url value='/mail'/>">Mail Services</a> |
-    <a href="<c:url value='/admin'/>">Admin</a> |
-    <a href="<c:url value='/questions.jsp'/>">Câu hỏi &amp; trả lời</a>
+    <a href="<c:url value='/admin'/>">Admin</a>
 </p>
 <hr>

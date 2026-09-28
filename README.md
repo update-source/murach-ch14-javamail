@@ -6,7 +6,7 @@ This is the **Email List** app from Chapter 14 of *Murach's Java Servlets/JSP (3
 - `MailUtilLocal` sends through an SMTP server on localhost. `MailUtilGmail` sends through a remote SMTPS server (Gmail) that requires authentication.
 - The `/admin` page sends one email to the whole list (`setRecipients` + BCC).
 - The **`/mail` (Mail Services)** page shows the status of every mail service and lets an admin test a connection, compose an email and view the send history (see below).
-- The `/questions.jsp` page contains **full answers to the chapter's questions** (also copied below).
+- The **Questions & answers** section at the end of this README fully answers the chapter's questions.
 
 ## Improvements over the slides
 
@@ -181,6 +181,6 @@ src/main/java/murach/data       UserDB (in-memory)
 src/main/java/murach/util       Email, MailConfig, MailUtil, MailUtilLocal, MailUtilGmail, MailUtilResend, MailUtilBrevo,
                                 MailService, MailServiceInfo, MailLog, HtmlUtil
 src/main/java/murach/email      EmailListServlet, WelcomeEmail, AdminServlet, AdminAuth, MailServiceServlet, HealthServlet
-src/main/webapp                 index.jsp, thanks.jsp, questions.jsp, WEB-INF/{web.xml, admin.jsp, mail.jsp, error.jsp}
+src/main/webapp                 index.jsp, thanks.jsp, WEB-INF/{web.xml, admin.jsp, mail.jsp, error.jsp}
 Dockerfile, docker-entrypoint.sh, render.yaml
 ```
